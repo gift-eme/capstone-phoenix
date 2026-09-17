@@ -8,6 +8,10 @@ backend.hcl
 !backend.hcl.example
 crash.log
 
+# personal, not secret — whoever provisions brings their own keypair
+infra/terraform/taskappkey-created.pub
+!infra/terraform/taskappkey-created.pub.example
+
 # kubeconfig & cluster joins
 kubeconfig
 *kubeconfig*
