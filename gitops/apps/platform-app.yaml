@@ -13,6 +13,12 @@ spec:
     path: manifests/platform
     directory:
       recurse: true
+      # These 2 Jobs have ttlSecondsAfterFinished: 0 — Kubernetes deletes them
+      # the moment they complete, which selfHeal then "fixes" by recreating
+      # them, forever, in a tight sync loop. They're one-shot bootstrap
+      # actions (generate the webhook's TLS cert), not steady-state desired
+      # state, so they're excluded from GitOps tracking entirely.
+      exclude: 'ingress-nginx/admission-jobs.yaml'
   destination:
     server: https://kubernetes.default.svc
   syncPolicy:
