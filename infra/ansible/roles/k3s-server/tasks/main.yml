@@ -1,0 +1,95 @@
+---
+- name: Ensure /etc/rancher/k3s directory exists
+  ansible.builtin.file:
+    path: /etc/rancher/k3s
+    state: directory
+    mode: "0755"
+
+- name: Write k3s server config (disabled addons, node taints)
+  ansible.builtin.copy:
+    dest: /etc/rancher/k3s/config.yaml
+    mode: "0644"
+    content: |
+      disable:
+      {% for c in k3s_disable_components %}
+        - {{ c }}
+      {% endfor %}
+      node-taint:
+      {% for t in k3s_node_taints %}
+        - "{{ t }}"
+      {% endfor %}
+      tls-san:
+        - "{{ ansible_host }}"
+  notify: Restart k3s
+
+- name: Install k3s server (skipped if already installed)
+  ansible.builtin.shell: curl -sfL https://get.k3s.io | sh -
+  args:
+    creates: /usr/local/bin/k3s
+
+- name: Ensure k3s service is enabled and running
+  ansible.builtin.systemd:
+    name: k3s
+    enabled: true
+    state: started
+
+- name: Wait for this node to register with the API server
+  ansible.builtin.command: "kubectl --kubeconfig=/etc/rancher/k3s/k3s.yaml get node {{ ansible_hostname }}"
+  register: node_ready_check
+  until: node_ready_check.rc == 0
+  retries: 12
+  delay: 5
+  changed_when: false
+
+- name: Read current node taints
+  ansible.builtin.command: "kubectl --kubeconfig=/etc/rancher/k3s/k3s.yaml get node {{ ansible_hostname }} -o jsonpath={.spec.taints}"
+  register: current_node_taints
+  changed_when: false
+
+- name: Apply configured node taints
+  # node-taint in config.yaml only takes effect at a node's FIRST registration —
+  # restarting k3s on an already-registered node does not retroactively taint it,
+  # so this applies it directly via kubectl, guarded to stay idempotent.
+  ansible.builtin.command: "kubectl --kubeconfig=/etc/rancher/k3s/k3s.yaml taint node {{ ansible_hostname }} {{ item }}"
+  loop: "{{ k3s_node_taints }}"
+  when: item.split('=')[0] not in current_node_taints.stdout
+
+- name: Wait for node-token to exist
+  ansible.builtin.wait_for:
+    path: /var/lib/rancher/k3s/server/node-token
+    timeout: 60
+
+- name: Read node token
+  ansible.builtin.slurp:
+    src: /var/lib/rancher/k3s/server/node-token
+  register: node_token_raw
+
+- name: Expose node token as a fact for the agent play
+  ansible.builtin.set_fact:
+    node_token: "{{ node_token_raw.content | b64decode | trim }}"
+
+- name: Wait for kubeconfig to exist
+  ansible.builtin.wait_for:
+    path: /etc/rancher/k3s/k3s.yaml
+    timeout: 60
+
+- name: Read k3s kubeconfig
+  ansible.builtin.slurp:
+    src: /etc/rancher/k3s/k3s.yaml
+  register: k3s_kubeconfig_raw
+
+- name: Ensure local kubeconfig fetch directory exists
+  ansible.builtin.file:
+    path: "{{ kubeconfig_fetch_dir }}"
+    state: directory
+    mode: "0700"
+  delegate_to: localhost
+  become: false
+
+- name: Write kubeconfig locally, server address rewritten to the public IP
+  ansible.builtin.copy:
+    content: "{{ (k3s_kubeconfig_raw.content | b64decode).replace('127.0.0.1', ansible_host) }}"
+    dest: "{{ kubeconfig_fetch_dir }}/kubeconfig"
+    mode: "0600"
+  delegate_to: localhost
+  become: false

@@ -1,0 +1,22 @@
+=== NetworkPolicy in place ===
+NAME                        POD-SELECTOR   AGE
+allow-backend-to-postgres   app=postgres   76m
+
+=== ALLOWED: backend -> postgres:5432 ===
+CONNECTED in 167.8 ms
+
+=== BLOCKED: frontend -> postgres:5432 (should fail fast, not just time out) ===
+Connecting to postgres:5432 (10.42.1.12:5432)
+wget: can't connect to remote host (10.42.1.12): Connection refused
+BLOCKED_AS_EXPECTED
+
+=== PodDisruptionBudgets ===
+NAME           MIN AVAILABLE   MAX UNAVAILABLE   ALLOWED DISRUPTIONS   AGE
+backend-pdb    1               N/A               1                     99m
+frontend-pdb   1               N/A               1                     99m
+postgres-pdb   1               N/A               0                     99m
+
+=== Live securityContext (backend pod) ===
+{"runAsGroup":1000,"runAsNonRoot":true,"runAsUser":1000,"seccompProfile":{"type":"RuntimeDefault"}}
+
+{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"readOnlyRootFilesystem":false}

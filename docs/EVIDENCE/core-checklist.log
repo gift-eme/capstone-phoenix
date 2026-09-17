@@ -1,0 +1,105 @@
+=== ConfigMap & Secret ===
+NAME                         DATA   AGE
+configmap/kube-root-ca.crt   1      3h27m
+configmap/taskapp-config     3      3h27m
+
+NAME                     TYPE                DATA   AGE
+secret/taskapp-secrets   Opaque              3      3h27m
+secret/taskapp-tls       kubernetes.io/tls   2      122m
+
+=== Services ===
+NAME       TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)    AGE
+backend    ClusterIP   10.43.48.25   <none>        5000/TCP   178m
+frontend   ClusterIP   10.43.72.62   <none>        80/TCP     177m
+postgres   ClusterIP   None          <none>        5432/TCP   3h27m
+
+=== Image tags in use (proving none are :latest) ===
+backend-56c6bff7ff-22p2z  ->  ghcr.io/ts-a-devops/taskapp-backend:5d6b8fc 
+backend-56c6bff7ff-wfzjb  ->  ghcr.io/ts-a-devops/taskapp-backend:5d6b8fc 
+frontend-5ff5498d97-4vqrn  ->  ghcr.io/ts-a-devops/taskapp-frontend:26da2b0 
+frontend-5ff5498d97-g9q74  ->  ghcr.io/ts-a-devops/taskapp-frontend:26da2b0 
+postgres-0  ->  postgres:16.15-alpine 
+taskapp-migrate-2m9h6  ->  ghcr.io/ts-a-devops/taskapp-backend:5d6b8fc 
+
+=== backend probes & resources ===
+    Limits:
+      cpu:     250m
+      memory:  200Mi
+    Requests:
+      cpu:      50m
+      memory:   96Mi
+    Liveness:   tcp-socket :5000 delay=15s timeout=1s period=20s successThreshold=1 failureThreshold=3
+    Readiness:  http-get http://:5000/api/health delay=5s timeout=1s period=10s successThreshold=1 failureThreshold=3
+    Startup:    http-get http://:5000/api/health delay=0s timeout=1s period=2s successThreshold=1 failureThreshold=30
+    Environment Variables from:
+      taskapp-config  ConfigMap  Optional: false
+    Environment:
+      DATABASE_USER:      <set to the key 'DATABASE_USER' in secret 'taskapp-secrets'>      Optional: false
+      DATABASE_PASSWORD:  <set to the key 'DATABASE_PASSWORD' in secret 'taskapp-secrets'>  Optional: false
+      SECRET_KEY:         <set to the key 'SECRET_KEY' in secret 'taskapp-secrets'>         Optional: false
+--
+    Limits:
+      cpu:     250m
+      memory:  200Mi
+    Requests:
+      cpu:      50m
+      memory:   96Mi
+    Liveness:   tcp-socket :5000 delay=15s timeout=1s period=20s successThreshold=1 failureThreshold=3
+    Readiness:  http-get http://:5000/api/health delay=5s timeout=1s period=10s successThreshold=1 failureThreshold=3
+    Startup:    http-get http://:5000/api/health delay=0s timeout=1s period=2s successThreshold=1 failureThreshold=30
+    Environment Variables from:
+      taskapp-config  ConfigMap  Optional: false
+    Environment:
+      DATABASE_USER:      <set to the key 'DATABASE_USER' in secret 'taskapp-secrets'>      Optional: false
+      DATABASE_PASSWORD:  <set to the key 'DATABASE_PASSWORD' in secret 'taskapp-secrets'>  Optional: false
+      SECRET_KEY:         <set to the key 'SECRET_KEY' in secret 'taskapp-secrets'>         Optional: false
+
+=== frontend probes & resources ===
+    Limits:
+      cpu:     100m
+      memory:  64Mi
+    Requests:
+      cpu:        25m
+      memory:     32Mi
+    Liveness:     http-get http://:80/healthz delay=10s timeout=1s period=10s successThreshold=1 failureThreshold=3
+    Readiness:    http-get http://:80/healthz delay=0s timeout=1s period=10s successThreshold=1 failureThreshold=3
+    Startup:      http-get http://:80/healthz delay=0s timeout=1s period=2s successThreshold=1 failureThreshold=15
+    Environment:  <none>
+    Mounts:
+      /tmp from tmp (rw)
+      /var/cache/nginx from nginx-cache (rw)
+      /var/run from nginx-run (rw)
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-d4b27 (ro)
+--
+    Limits:
+      cpu:     100m
+      memory:  64Mi
+    Requests:
+      cpu:        25m
+      memory:     32Mi
+    Liveness:     http-get http://:80/healthz delay=10s timeout=1s period=10s successThreshold=1 failureThreshold=3
+    Readiness:    http-get http://:80/healthz delay=0s timeout=1s period=10s successThreshold=1 failureThreshold=3
+    Startup:      http-get http://:80/healthz delay=0s timeout=1s period=2s successThreshold=1 failureThreshold=15
+    Environment:  <none>
+    Mounts:
+      /tmp from tmp (rw)
+      /var/cache/nginx from nginx-cache (rw)
+      /var/run from nginx-run (rw)
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-ldc44 (ro)
+
+=== postgres probes & resources ===
+    Limits:
+      cpu:     250m
+      memory:  256Mi
+    Requests:
+      cpu:      50m
+      memory:   128Mi
+    Liveness:   exec [sh -c pg_isready -U $POSTGRES_USER -d $POSTGRES_DB] delay=15s timeout=1s period=20s successThreshold=1 failureThreshold=3
+    Readiness:  exec [sh -c pg_isready -U $POSTGRES_USER -d $POSTGRES_DB] delay=5s timeout=1s period=10s successThreshold=1 failureThreshold=3
+    Startup:    exec [sh -c pg_isready -U $POSTGRES_USER -d $POSTGRES_DB] delay=0s timeout=1s period=2s successThreshold=1 failureThreshold=30
+    Environment:
+      POSTGRES_DB:        <set to the key 'DATABASE_NAME' of config map 'taskapp-config'>   Optional: false
+      POSTGRES_USER:      <set to the key 'DATABASE_USER' in secret 'taskapp-secrets'>      Optional: false
+      POSTGRES_PASSWORD:  <set to the key 'DATABASE_PASSWORD' in secret 'taskapp-secrets'>  Optional: false
+      PGDATA:             /var/lib/postgresql/data/pgdata
+    Mounts:

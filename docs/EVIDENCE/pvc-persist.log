@@ -1,0 +1,17 @@
+=== Insert marker row ===
+CREATE TABLE
+INSERT 0 1
+
+=== Delete the pod ===
+pod "postgres-0" deleted from taskapp namespace
+
+=== Wait for it to come back ===
+pod/postgres-0 condition met
+
+=== Verify data survived ===
+ id |                    note                    
+----+--------------------------------------------
+  1 | created before pod delete
+  2 | evidence-run-2026-09-17 13:06:22.515185+00
+(2 rows)
+

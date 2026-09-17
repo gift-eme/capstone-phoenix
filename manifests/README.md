@@ -1,14 +1,12 @@
 # manifests/ — what you must produce
 
-This is a **checklist, not an answer key.** The K8s lesson's reference manifests
-(`cicd_dockerized/k8s-lesson/manifests/`) target a single-node laptop cluster. Here you
-re-author them for real multi-node infra and add the hardening the brief requires.
+This is a **checklist, not an answer key.** 
 
-Produce (raw YAML, a Helm chart, or kustomize overlays — your call):
+Produce (raw YAML):
 
 **App**
 - [ ] `namespace`
-- [ ] `ConfigMap` (non-secret) + `Secret` (secret, NOT committed in plaintext — see gitops/ + Sealed Secrets stretch)
+- [ ] `ConfigMap` (non-secret) + `Secret` (secret, NOT committed in plaintext — see gitops/ + Sealed Secrets bonus stretch)
 - [ ] Postgres `StatefulSet` + headless `Service` + PVC on the cluster's storage class
 - [ ] backend `Deployment` (2+ replicas) + `Service` named **`backend`** (the frontend proxies `/api` → `backend:5000`)
 - [ ] frontend `Deployment` (2+ replicas) + `Service`

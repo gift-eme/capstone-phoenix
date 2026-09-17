@@ -1,7 +1,6 @@
 # Repo structure
 
-Build out this layout. The stub READMEs in each folder tell you what goes there. You may
-swap raw `manifests/` for a Helm chart or kustomize overlays — say which in ARCHITECTURE.md.
+Build out this layout. The stub READMEs in each folder tell you what goes there.
 
 ```
 capstone-phoenix/
@@ -15,7 +14,7 @@ capstone-phoenix/
 │   └── ansible/              # roles: hardening, k3s-server, k3s-agent
 │       └── README.md
 │
-├── manifests/                # OR helm/ OR kustomize/ — TaskApp + platform
+├── manifests/                # TaskApp + platform
 │   └── README.md             # the checklist of objects you must produce
 │
 ├── gitops/                   # Argo CD Application(s) pointing at manifests/

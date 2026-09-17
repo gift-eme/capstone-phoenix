@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: taskapp-config
+  namespace: taskapp
+data:
+  DATABASE_HOST: "postgres" # headless Service name (manifests/postgres/service.yaml)
+  DATABASE_PORT: "5432"
+  DATABASE_NAME: "taskapp"

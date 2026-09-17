@@ -1,0 +1,24 @@
+# App-of-apps root. This is the one Application applied by hand (kubectl apply,
+# once); everything else — platform and taskapp, and any future additions to
+# gitops/apps/ — is then managed declaratively through this repo, no further
+# manual kubectl needed.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/gift-eme/capstone-phoenix.git
+    targetRevision: main
+    path: gitops/apps
+    directory:
+      recurse: false
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

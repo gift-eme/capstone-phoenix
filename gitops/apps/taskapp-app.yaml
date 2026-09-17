@@ -1,0 +1,39 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: taskapp
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/gift-eme/capstone-phoenix.git
+    targetRevision: main
+    path: manifests
+    directory:
+      recurse: true
+      # platform/** is owned by the sibling "platform" Application, not this
+      # one. secret.example.yaml is a placeholder Secret object (real values
+      # live in the gitignored secret.yaml, created out-of-band) — syncing
+      # the example would overwrite the real secret with placeholder text.
+      exclude: '{platform/**,secret.example.yaml}'
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: taskapp
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+  ignoreDifferences:
+    # HPA owns replica count once it's live; without this Argo CD's selfHeal
+    # would fight the HPA back down to the committed replicas: 2 every time
+    # it scales up under load.
+    - group: apps
+      kind: Deployment
+      name: backend
+      namespace: taskapp
+      jsonPointers:
+        - /spec/replicas

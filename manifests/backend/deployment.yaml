@@ -1,0 +1,125 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: taskapp
+  labels:
+    app: backend
+    tier: api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0 # zero dropped requests during a deploy
+  template:
+    metadata:
+      labels:
+        app: backend
+        tier: api
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000 # "appuser" created in the image (Dockerfile)
+        runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      terminationGracePeriodSeconds: 30
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          # Honor, not the default Ignore: otherwise the tainted control-plane
+          # (0 backend pods, can never host one) still counts toward skew.
+          #
+          # Soft/skew-bounded on purpose, not hard pod anti-affinity: with
+          # exactly 2 replicas and 2 eligible nodes, a hard "never co-locate"
+          # rule deadlocks maxSurge-based maxUnavailable:0 rollouts (the surge
+          # pod can never schedule since both nodes already have one, and the
+          # old pod can't be removed until the new one is Ready). maxSkew:1
+          # allows the brief surge overlap a rollout needs while still
+          # bounding the worst case to "1 node ahead," never a full pileup.
+          nodeTaintsPolicy: Honor
+          labelSelector:
+            matchLabels:
+              app: backend
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:1.36.1
+          command: ["sh", "-c", "until nc -z postgres 5432; do echo waiting for postgres; sleep 2; done;"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+      containers:
+        - name: backend
+          image: ghcr.io/ts-a-devops/taskapp-backend:5d6b8fc
+          imagePullPolicy: IfNotPresent
+          # Overrides ENTRYPOINT (docker-entrypoint.sh runs migrations first) —
+          # replicas go straight to gunicorn; only the migration Job runs alembic.
+          command: ["gunicorn", "--workers", "3", "--bind", "0.0.0.0:5000", "--access-logfile", "-", "run:app"]
+          lifecycle:
+            preStop:
+              # Give the Service's endpoint removal time to propagate before
+              # gunicorn actually stops accepting connections — avoids a brief
+              # window of dropped requests during a rolling update.
+              exec:
+                command: ["sh", "-c", "sleep 5"]
+          ports:
+            - containerPort: 5000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: taskapp-config
+          env:
+            - name: DATABASE_USER
+              valueFrom:
+                secretKeyRef:
+                  name: taskapp-secrets
+                  key: DATABASE_USER
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: taskapp-secrets
+                  key: DATABASE_PASSWORD
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: taskapp-secrets
+                  key: SECRET_KEY
+          startupProbe:
+            httpGet:
+              path: /api/health
+              port: 5000
+            failureThreshold: 30
+            periodSeconds: 2
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            # TCP, not /api/health: liveness shouldn't restart the process over a
+            # transient Postgres blip — readiness already pulls it out of rotation.
+            tcpSocket:
+              port: 5000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "96Mi"
+            limits:
+              cpu: "250m"
+              memory: "200Mi"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false # PYTHONDONTWRITEBYTECODE=1 set, but not fully verified read-only-safe
+            capabilities:
+              drop: ["ALL"]

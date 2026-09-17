@@ -1,0 +1,104 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: taskapp
+  labels:
+    app: frontend
+    tier: web
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: frontend
+        tier: web
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101 # "nginx" user in the nginx:alpine base image
+        runAsGroup: 101
+        seccompProfile:
+          type: RuntimeDefault
+      terminationGracePeriodSeconds: 15
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          # Honor, not the default Ignore: otherwise the tainted control-plane
+          # (0 frontend pods, can never host one) still counts toward skew.
+          #
+          # Soft/skew-bounded on purpose, not hard pod anti-affinity: with
+          # exactly 2 replicas and 2 eligible nodes, a hard "never co-locate"
+          # rule deadlocks maxSurge-based maxUnavailable:0 rollouts (the surge
+          # pod can never schedule since both nodes already have one, and the
+          # old pod can't be removed until the new one is Ready). maxSkew:1
+          # allows the brief surge overlap a rollout needs while still
+          # bounding the worst case to "1 node ahead," never a full pileup.
+          nodeTaintsPolicy: Honor
+          labelSelector:
+            matchLabels:
+              app: frontend
+      containers:
+        - name: frontend
+          image: ghcr.io/ts-a-devops/taskapp-frontend:26da2b0
+          imagePullPolicy: IfNotPresent
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sh", "-c", "sleep 5"]
+          ports:
+            - containerPort: 80
+              name: http
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: 80
+            failureThreshold: 15
+            periodSeconds: 2
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 80
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: "25m"
+              memory: "32Mi"
+            limits:
+              cpu: "100m"
+              memory: "64Mi"
+          volumeMounts:
+            - name: nginx-cache
+              mountPath: /var/cache/nginx
+            - name: nginx-run
+              mountPath: /var/run
+            - name: tmp
+              mountPath: /tmp
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+              add: ["NET_BIND_SERVICE"] # bind port 80 as non-root, without full root
+      volumes:
+        - name: nginx-cache
+          emptyDir: {}
+        - name: nginx-run
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}

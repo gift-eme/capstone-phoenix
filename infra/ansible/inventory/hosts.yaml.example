@@ -1,0 +1,18 @@
+all:
+  vars:
+    ansible_user: ubuntu
+    ansible_ssh_private_key_file: ~/.ssh/taskappkey-created
+  children:
+    server:
+      hosts: # replace with resources public ip for ansible_host and private ip for k3s_private_ip
+        control-plane:
+          ansible_host: 203.0.113.10
+          k3s_private_ip: 10.60.1.10
+    agents:
+      hosts:
+        worker-1:
+          ansible_host: 203.0.113.11
+          k3s_private_ip: 10.60.1.11
+        worker-2:
+          ansible_host: 203.0.113.12
+          k3s_private_ip: 10.60.1.12

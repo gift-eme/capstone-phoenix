@@ -1,8 +1,5 @@
 # Cost (fill this in)
 
-This echoes the Docker lesson's "why one server" thread — except now the answer to "is the
-extra cost worth it?" is yours to argue.
-
 ## Monthly itemized cost
 | Item | Spec | Qty | $/mo |
 |---|---|---:|---:|

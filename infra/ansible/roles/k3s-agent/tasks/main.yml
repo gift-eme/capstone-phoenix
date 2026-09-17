@@ -1,0 +1,15 @@
+---
+- name: Install k3s agent and join the server (skipped if already installed)
+  ansible.builtin.shell: curl -sfL https://get.k3s.io | sh -
+  args:
+    creates: /usr/local/bin/k3s
+  environment:
+    INSTALL_K3S_EXEC: "{{ k3s_install_exec }}"
+    K3S_URL: "https://{{ hostvars[groups['server'][0]].k3s_private_ip }}:6443"
+    K3S_TOKEN: "{{ hostvars[groups['server'][0]].node_token }}"
+
+- name: Ensure k3s-agent service is enabled and running
+  ansible.builtin.systemd:
+    name: k3s-agent
+    enabled: true
+    state: started

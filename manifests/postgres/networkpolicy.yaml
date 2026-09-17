@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-backend-to-postgres
+  namespace: taskapp
+spec:
+  podSelector:
+    matchLabels:
+      app: postgres # the pod to isolate
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: backend # the pod allowed to access the isolated pod
+        - podSelector:
+            matchLabels:
+              app: taskapp-migrate # one-shot migration Job also needs 5432
+      ports:
+        - protocol: TCP
+          port: 5432 # ...and only on the postgres port

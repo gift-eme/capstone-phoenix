@@ -1,0 +1,5 @@
+bucket         = "taskapp-phoenix-tfstate-XXXXXXXX"
+key            = "capstone-phoenix/terraform.tfstate"
+region         = "eu-north-1"
+dynamodb_table = "taskapp-phoenix-tf-locks"
+encrypt        = true

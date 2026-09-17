@@ -28,7 +28,7 @@
 ## 3. Request flow (one paragraph)
 > DNS → ingress → TLS → frontend → /api → backend → Postgres. Be specific about names/ports.
 
-## 4. The single-server assumptions you fixed  ← graders look here
+## 4. The single-server assumptions you fixed  ← this is important
 > For each, name the assumption that was safe on one box but breaks on a cluster, and the
 > K8s mechanism you used. Minimum: migrations, persistent storage, traffic routing,
 > self-healing, zero-downtime deploys, secrets.

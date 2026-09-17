@@ -1,0 +1,11 @@
+region             = "eu-north-1"
+project            = "taskapp-phoenix"
+admin_cidrs        = ["203.0.113.0/24"] # replace with your own IP/CIDR
+instance_type      = "t3.micro"
+vpc_cidr           = "10.60.0.0/16"
+public_subnet_cidr = "10.60.1.0/24"
+availability_zone  = "eu-north-1a"
+worker_count       = 2
+key_name           = "taskapp-phoenix-key"
+public_key_path    = "./taskappkey-created.pub"
+root_volume_size   = 8

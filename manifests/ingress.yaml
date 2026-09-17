@@ -1,0 +1,28 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: taskapp
+  namespace: taskapp
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - taskapp-gift-capstone.duckdns.org
+      secretName: taskapp-tls
+  rules:
+    - host: taskapp-gift-capstone.duckdns.org
+      http:
+        paths:
+          # Same-origin routing: everything goes to the frontend Service.
+          # The frontend's own nginx.conf proxies /api/ to backend:5000
+          # internally (see bonus/frontend.cicd/nginx.conf) — no separate
+          # /api path rule needed at the ingress level.
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80

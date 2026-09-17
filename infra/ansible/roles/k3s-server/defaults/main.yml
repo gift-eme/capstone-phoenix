@@ -1,0 +1,12 @@
+k3s_disable_components:
+  - traefik
+  - servicelb
+# Dedicates the server node to control-plane duty. servicelb is disabled
+# explicitly (not left to implicit taint-tolerance) since ingress-nginx will
+# be pinned to the workers directly via nodeSelector when it's deployed —
+# deterministic placement, not dependent on what k3s's bundled addons tolerate.
+# App/platform workloads (ingress-nginx, cert-manager, Argo CD, Postgres,
+# backend, frontend) land only on the workers.
+k3s_node_taints:
+  - "CriticalAddonsOnly=true:NoExecute"
+kubeconfig_fetch_dir: "{{ playbook_dir }}/../fetched"

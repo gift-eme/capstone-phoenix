@@ -4,6 +4,8 @@
 .terraform/
 *.tfvars
 !*.tfvars.example
+backend.hcl
+!backend.hcl.example
 crash.log
 
 # kubeconfig & cluster joins
@@ -12,6 +14,11 @@ kubeconfig
 k3s.yaml
 node-token
 *.token
+infra/ansible/inventory/hosts.yaml
+!infra/ansible/inventory/hosts.yaml.example
+infra/ansible/inventory/group_vars/all.yml
+!infra/ansible/inventory/group_vars/all.yml.example
+infra/ansible/fetched/
 
 # secrets / env
 .env

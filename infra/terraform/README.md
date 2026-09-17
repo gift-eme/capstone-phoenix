@@ -14,4 +14,4 @@ Seed this from your single-EC2 Terraform and grow it to a small fleet.
 leaves nothing behind. Re-running `plan` after apply shows no drift.
 
 > Keep infra lean: one k3s server is fine — you do NOT need a multi-master/HA control plane.
-> The difficulty in this capstone lives in Kubernetes, not the control plane.
+

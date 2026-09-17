@@ -1,0 +1,18 @@
+---
+- name: Harden all nodes
+  hosts: all
+  become: true
+  roles:
+    - hardening
+
+- name: Install and configure the k3s server
+  hosts: server
+  become: true
+  roles:
+    - k3s-server
+
+- name: Join k3s agents to the server
+  hosts: agents
+  become: true
+  roles:
+    - k3s-agent

@@ -1,0 +1,13 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: postgres-pdb
+  namespace: taskapp
+spec:
+  # Single replica: minAvailable=1 means zero disruption budget — a node drain
+  # can't casually evict postgres-0 without an explicit override. Intentional
+  # for a single-instance DB (see docs/ARCHITECTURE.md HA/Postgres trade-off).
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: postgres
