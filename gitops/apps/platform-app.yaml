@@ -38,3 +38,12 @@ spec:
       kind: CustomResourceDefinition
       jqPathExpressions:
         - '.spec.conversion.webhook.clientConfig.caBundle'
+    # The committed YAML has the literal placeholder "${LETSENCRYPT_EMAIL}" —
+    # apply-issuers.sh substitutes the real email in at apply time from a
+    # gitignored .env, same reason the email isn't hardcoded in git. Without
+    # this, selfHeal overwrites the live (real) email back to that literal
+    # placeholder string on every sync, which is what just happened.
+    - group: cert-manager.io
+      kind: ClusterIssuer
+      jqPathExpressions:
+        - '.spec.acme.email'
