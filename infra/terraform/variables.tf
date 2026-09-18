@@ -39,7 +39,7 @@ variable "availability_zone" {
 variable "worker_count" {
   description = "Number of k3s agent nodes"
   type        = number
-  default     = 2
+  default     = 3
 }
 
 variable "key_name" {
@@ -57,5 +57,5 @@ variable "public_key_path" {
 variable "root_volume_size" {
   description = "Root EBS volume size (GB) per node"
   type        = number
-  default     = 10
+  default     = 7
 }
