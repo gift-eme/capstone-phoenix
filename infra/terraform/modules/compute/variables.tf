@@ -6,7 +6,11 @@ variable "ami_id" {
   type = string
 }
 
-variable "instance_type" {
+variable "server_instance_type" {
+  type = string
+}
+
+variable "worker_instance_type" {
   type = string
 }
 

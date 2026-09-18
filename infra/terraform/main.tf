@@ -33,13 +33,14 @@ module "security_group" {
 module "compute" {
   source = "./modules/compute"
 
-  project           = var.project
-  ami_id            = data.aws_ami.ubuntu.id
-  instance_type     = var.instance_type
-  subnet_id         = module.network.public_subnet_id
-  security_group_id = module.security_group.sg_id
-  key_name          = var.key_name
-  public_key_path   = var.public_key_path
-  worker_count      = var.worker_count
-  root_volume_size  = var.root_volume_size
+  project              = var.project
+  ami_id               = data.aws_ami.ubuntu.id
+  server_instance_type = var.server_instance_type
+  worker_instance_type = var.worker_instance_type
+  subnet_id            = module.network.public_subnet_id
+  security_group_id    = module.security_group.sg_id
+  key_name             = var.key_name
+  public_key_path      = var.public_key_path
+  worker_count         = var.worker_count
+  root_volume_size     = var.root_volume_size
 }

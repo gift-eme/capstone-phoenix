@@ -15,7 +15,13 @@ variable "admin_cidrs" {
   type        = list(string)
 }
 
-variable "instance_type" {
+variable "server_instance_type" {
+  description = "Control-plane instance type — sized larger than workers since it's the single point of failure running the k3s server, API server, and embedded datastore"
+  type        = string
+  default     = "t3.micro"
+}
+
+variable "worker_instance_type" {
   description = "Free-tier-eligible instance type for eu-north-1"
   type        = string
   default     = "t3.micro"
@@ -57,5 +63,5 @@ variable "public_key_path" {
 variable "root_volume_size" {
   description = "Root EBS volume size (GB) per node"
   type        = number
-  default     = 7
+  default     = 8
 }

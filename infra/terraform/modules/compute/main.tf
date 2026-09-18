@@ -5,7 +5,7 @@ resource "aws_key_pair" "deployer" {
 
 resource "aws_instance" "server" {
   ami                         = var.ami_id
-  instance_type               = var.instance_type
+  instance_type               = var.server_instance_type
   subnet_id                   = var.subnet_id
   vpc_security_group_ids      = [var.security_group_id]
   key_name                    = aws_key_pair.deployer.key_name
@@ -26,7 +26,7 @@ resource "aws_instance" "server" {
 resource "aws_instance" "worker" {
   count                       = var.worker_count
   ami                         = var.ami_id
-  instance_type               = var.instance_type
+  instance_type               = var.worker_instance_type
   subnet_id                   = var.subnet_id
   vpc_security_group_ids      = [var.security_group_id]
   key_name                    = aws_key_pair.deployer.key_name
