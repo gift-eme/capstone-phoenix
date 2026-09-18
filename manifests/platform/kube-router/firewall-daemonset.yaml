@@ -75,6 +75,17 @@ spec:
       dnsPolicy: Default
       nodeSelector:
         kubernetes.io/os: linux
+      affinity:
+        nodeAffinity:
+          # Control-plane doesn't run app workloads (CriticalAddonsOnly taint),
+          # so it doesn't need local NetworkPolicy enforcement — only the
+          # workers do. Excluding it reduces load on the most memory-
+          # constrained node in the cluster.
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/control-plane
+                    operator: DoesNotExist
       tolerations:
       - effect: NoSchedule
         operator: Exists

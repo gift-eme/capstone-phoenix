@@ -8,4 +8,4 @@ availability_zone  = "eu-north-1a"
 worker_count       = 2
 key_name           = "taskapp-phoenix-key"
 public_key_path    = "./taskappkey-created.pub"
-root_volume_size   = 8
+root_volume_size   = 10

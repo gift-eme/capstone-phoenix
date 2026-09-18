@@ -57,5 +57,5 @@ variable "public_key_path" {
 variable "root_volume_size" {
   description = "Root EBS volume size (GB) per node"
   type        = number
-  default     = 8
+  default     = 10
 }

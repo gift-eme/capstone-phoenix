@@ -10,8 +10,12 @@ spec:
     name: backend
   minReplicas: 2
   # Capped low on purpose: 2 worker nodes with ~1GB RAM each — maxReplicas: 10
-  # (a common default) isn't realistically supportable here.
-  maxReplicas: 4
+  # (a common default) isn't realistically supportable here. Temporarily
+  # capped at 2 (== minReplicas, effectively disabling scale-up) after a
+  # cluster-wide instability event: HPA scaling to 4 under CPU spikes caused
+  # by the instability itself was making things worse, not better. Revisit
+  # once the cluster is stable again.
+  maxReplicas: 2
   metrics:
     - type: Resource
       resource:
